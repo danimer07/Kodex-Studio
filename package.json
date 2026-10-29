@@ -1,0 +1,15 @@
+{
+  "name": "kodex-studio",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Sitio web de Kodex Studio (Vercel + Neon Postgres)",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "setup-db": "node --env-file=.env scripts/setup-db.js",
+    "dev": "vercel dev"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^1.0.0"
+  }
+}

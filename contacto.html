@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Contacto — Kodex Studio</title>
+<meta name="description" content="Escríbenos y cuéntanos tu proyecto.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/site.css">
+</head>
+<body>
+<main class="wrap">
+  <p class="eyebrow">Contacto</p>
+  <h1 class="page-title">Hablemos de tu proyecto</h1>
+  <p class="lead">Déjanos tus datos y una breve descripción. Te responderemos por correo.</p>
+
+  <form class="card section" id="f" style="max-width:40rem" novalidate>
+    <div class="form-grid two">
+      <div class="field"><label for="nombre">Nombre</label><input id="nombre" name="nombre" maxlength="120" autocomplete="name" placeholder="Tu nombre"></div>
+      <div class="field"><label for="email">Correo electrónico *</label><input id="email" name="email" type="email" maxlength="200" autocomplete="email" required placeholder="tu@correo.com"></div>
+    </div>
+    <div class="field" style="margin-top:1rem"><label for="mensaje">Cuéntanos tu idea</label><textarea id="mensaje" name="mensaje" maxlength="2000" placeholder="¿Qué necesitas construir?"></textarea></div>
+    <input class="hp" type="text" name="web" tabindex="-1" autocomplete="off" aria-hidden="true">
+    <div style="margin-top:1.25rem"><button class="pill" type="submit" id="btn">Enviar mensaje</button></div>
+    <p class="msg" id="msg" aria-live="polite"></p>
+  </form>
+</main>
+
+<script src="/site.js"></script>
+<script>
+(function () {
+  var f = document.getElementById('f'), msg = document.getElementById('msg'), btn = document.getElementById('btn');
+  f.addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (!f.email.value.trim() || !f.email.checkValidity()) {
+      msg.className = 'msg err'; msg.textContent = 'Escribe un correo válido.'; f.email.focus(); return;
+    }
+    btn.disabled = true; msg.className = 'msg'; msg.textContent = 'Enviando…';
+    window.K.api('/api/contact', {
+      method: 'POST',
+      body: { nombre: f.nombre.value, email: f.email.value, mensaje: f.mensaje.value, web: f.web.value, origen: 'contacto' }
+    }).then(function () {
+      f.reset(); msg.className = 'msg ok'; msg.textContent = '¡Gracias! Recibimos tu mensaje y te escribiremos pronto.';
+    }).catch(function (err) {
+      msg.className = 'msg err'; msg.textContent = err.message || 'No se pudo enviar. Intenta de nuevo.';
+    }).then(function () { btn.disabled = false; });
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Proyectos — Kodex Studio</title>
+<meta name="description" content="Proyectos de Kodex Studio: lo que ya está en producción y lo que estamos construyendo.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/site.css">
+</head>
+<body>
+<main class="wrap">
+  <p class="eyebrow">Proyectos</p>
+  <h1 class="page-title">Lo que construimos</h1>
+  <p class="lead">Mira qué proyectos tenemos, cuáles ya están en producción y en cuáles estamos trabajando ahora.</p>
+
+  <div class="section filters" id="filters" role="tablist" aria-label="Filtrar por estado"></div>
+  <p class="stats" id="stats" aria-live="polite"></p>
+  <div class="grid cols3 section" id="grid" style="margin-top:1.25rem"></div>
+  <div class="empty hidden" id="empty"></div>
+</main>
+
+<script src="/site.js"></script>
+<script>
+(function () {
+  var K = window.K, esc = K.esc;
+  var all = [], current = (location.hash || '').slice(1);
+  var $filters = document.getElementById('filters'),
+      $grid = document.getElementById('grid'),
+      $empty = document.getElementById('empty'),
+      $stats = document.getElementById('stats');
+
+  function card(p) {
+    var tech = (p.tecnologias || []).map(function (t) { return '<span class="tag">' + esc(t) + '</span>'; }).join('');
+    var media = p.imagen_url
+      ? '<img class="thumb" loading="lazy" src="' + esc(p.imagen_url) + '" alt="">'
+      : '<div class="thumb ph" aria-hidden="true">' + esc((p.nombre || '?').trim().charAt(0).toUpperCase()) + '</div>';
+    return '<article class="card proj">' + media +
+      '<div class="body">' +
+        '<div class="top"><span class="estado" data-e="' + esc(p.estado) + '">' + esc(K.ESTADOS[p.estado] || p.estado) + '</span></div>' +
+        '<h3>' + esc(p.nombre) + '</h3>' +
+        (p.cliente ? '<div class="cliente">' + esc(p.cliente) + '</div>' : '') +
+        (p.descripcion ? '<p>' + esc(p.descripcion) + '</p>' : '') +
+        (tech ? '<div class="tags">' + tech + '</div>' : '') +
+        (p.enlace ? '<a class="more" href="' + esc(p.enlace) + '" target="_blank" rel="noopener noreferrer">Ver proyecto ↗</a>' : '') +
+      '</div></article>';
+  }
+
+  function render() {
+    var counts = {};
+    all.forEach(function (p) { counts[p.estado] = (counts[p.estado] || 0) + 1; });
+    if (current && !K.ESTADOS[current]) current = '';
+
+    var chips = [['', 'Todos', all.length]];
+    Object.keys(K.ESTADOS).forEach(function (e) { if (counts[e]) chips.push([e, K.ESTADOS[e], counts[e]]); });
+    if (current && !counts[current]) current = '';
+
+    $filters.innerHTML = chips.map(function (c) {
+      return '<button type="button" role="tab" class="chip' + (c[0] === current ? ' active' : '') + '" data-e="' + c[0] + '" aria-selected="' + (c[0] === current) + '">' +
+        esc(c[1]) + ' <span class="count">' + c[2] + '</span></button>';
+    }).join('');
+
+    var list = current ? all.filter(function (p) { return p.estado === current; }) : all;
+    $grid.innerHTML = list.map(card).join('');
+    $empty.classList.toggle('hidden', list.length > 0);
+    if (!list.length) $empty.textContent = all.length ? 'No hay proyectos en este estado.' : 'Pronto publicaremos nuestros proyectos.';
+
+    var prod = counts.produccion || 0;
+    $stats.textContent = all.length
+      ? all.length + (all.length === 1 ? ' proyecto' : ' proyectos') + ' · ' + prod + ' en producción'
+      : '';
+  }
+
+  $filters.addEventListener('click', function (ev) {
+    var b = ev.target.closest('.chip');
+    if (!b) return;
+    current = b.dataset.e;
+    history.replaceState(null, '', current ? '#' + current : location.pathname);
+    render();
+  });
+
+  $grid.innerHTML = '<p class="stats">Cargando proyectos…</p>';
+  K.api('/api/projects').then(function (rows) {
+    all = rows;
+    render();
+  }).catch(function () {
+    $grid.innerHTML = '';
+    $empty.classList.remove('hidden');
+    $empty.textContent = 'No pudimos cargar los proyectos. Intenta de nuevo en un momento.';
+  });
+})();
+</script>
+</body>
+</html>
